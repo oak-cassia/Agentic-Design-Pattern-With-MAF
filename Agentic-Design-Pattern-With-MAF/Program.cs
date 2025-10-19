@@ -1,9 +1,5 @@
-﻿using System;
-using Azure.AI.OpenAI;
-using Azure.Identity;
-using Microsoft.Agents.AI;
+﻿using Microsoft.Agents.AI;
 using OllamaSharp;
-using OpenAI;
 
 var chatClient = new OllamaApiClient(new Uri("http://localhost:11434"), "phi4-mini-reasoning");
 
