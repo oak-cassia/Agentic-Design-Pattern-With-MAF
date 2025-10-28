@@ -32,7 +32,11 @@ var functionApprovalRequests = response.Messages
 FunctionApprovalRequestContent requestContent = functionApprovalRequests.First();
 Console.WriteLine($"We require approval to execute '{requestContent.FunctionCall.Name}'");
 
-var approvalMessage = new ChatMessage(ChatRole.User, [requestContent.CreateResponse(true)]);
+Console.Write("함수 실행을 승인하시겠습니까? (y/n): ");
+var userInput = Console.ReadLine()?.ToLower();
+bool isApproved = userInput == "y" || userInput == "yes";
+
+var approvalMessage = new ChatMessage(ChatRole.User, [requestContent.CreateResponse(isApproved)]);
 Console.WriteLine(await agent.RunAsync(approvalMessage, thread));
 
 // AgentThread thread = agent.GetNewThread();
