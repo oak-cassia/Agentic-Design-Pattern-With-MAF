@@ -2,17 +2,12 @@
 using Microsoft.Agents.AI;
 using OllamaSharp;
 using Microsoft.Extensions.AI;
+using Agentic_Design_Pattern_With_MAF.Services;
 
 #pragma warning disable MEAI001
 
-[Description("Get the weather for a given location.")]
-static string GetWeather([Description("The location to get the weather for.")] string location)
-    => $"The weather in {location} is cloudy with a high of 15°C.";
-
-// --------------------
-AIFunction weatherFunction = AIFunctionFactory.Create(GetWeather);
+AIFunction weatherFunction = AIFunctionFactory.Create(WeatherService.GetWeather);
 AIFunction approvalRequiredWeatherFunction = new ApprovalRequiredAIFunction(weatherFunction);
-
 
 var chatClient = new OllamaApiClient(new Uri("http://localhost:11434"), "phi4-mini");
 
