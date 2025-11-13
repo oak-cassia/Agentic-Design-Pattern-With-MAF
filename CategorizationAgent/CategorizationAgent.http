@@ -1,0 +1,6 @@
+@CategorizationAgent_HostAddress = http://localhost:5273
+
+GET {{CategorizationAgent_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
