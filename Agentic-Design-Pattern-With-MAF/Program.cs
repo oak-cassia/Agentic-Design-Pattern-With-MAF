@@ -1,8 +1,8 @@
-﻿using System.ComponentModel;
-using Microsoft.Agents.AI;
+﻿using Microsoft.Agents.AI;
 using OllamaSharp;
 using Microsoft.Extensions.AI;
 using Agentic_Design_Pattern_With_MAF.Services;
+using CategorizationAgent.DTOs;
 
 #pragma warning disable MEAI001
 
@@ -14,11 +14,28 @@ AIFunction approvalRequiredWeatherFunction = new ApprovalRequiredAIFunction(weat
 var chatClient = new OllamaApiClient(new Uri("http://localhost:11434"), "phi4-mini");
 
 // 3) 날씨 전용 에이전트
-AIAgent weatherAgent = new ChatClientAgent(
-    chatClient,
-    instructions: "You are a weather assistant. You ONLY answer weather questions with tools.",
-    name: "WeatherAgent",
-    tools: [approvalRequiredWeatherFunction]);
+ChatOptions chatOptions = new()
+{
+    ResponseFormat = ChatResponseFormat.ForJsonSchema<WeatherInfo>(),
+    Tools = [approvalRequiredWeatherFunction]
+};
+
+ChatClientAgentOptions chatClientAgentOptions = new()
+{
+    Name = "Weather Agent",
+    Instructions = "You are a weather assistant. You ONLY answer weather questions with tools.",
+    ChatOptions = chatOptions,
+};
+
+AIAgent weatherAgent = chatClient.CreateAIAgent(
+    chatClientAgentOptions
+);
+
+// AIAgent weatherAgent = new ChatClientAgent(
+//     chatClient,
+//     instructions: "You are a weather assistant. You ONLY answer weather questions with tools.",
+//     name: "WeatherAgent",
+//     tools: [approvalRequiredWeatherFunction]);
 
 // 4) 일반 대화 에이전트
 AIAgent chatAgent = new ChatClientAgent(
@@ -44,7 +61,7 @@ AIAgent RouteAsync(string userInput)
 
 // ---------------- 실제 사용부 ----------------
 // Console.Write("사용자 입력: ");
-var userText = "What is the weather like in Amsterdam?";
+var userText = "use Tool. What is the weather like in Amsterdam?";
 
 // 1) 라우팅해서 어떤 에이전트 쓸지 결정
 AIAgent agent = RouteAsync(userText);
