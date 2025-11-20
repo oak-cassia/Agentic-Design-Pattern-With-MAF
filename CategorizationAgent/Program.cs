@@ -4,27 +4,42 @@ using Microsoft.Agents.AI.DevUI;
 using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
-using OllamaSharp;
+using OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1) Ollama IChatClient 설정
-var ollama = new OllamaApiClient(new Uri("http://localhost:11434"));
-ollama.SelectedModel = "phi4-mini";
 
-builder.Services.AddChatClient(ollama); // IChatClient 등록
+// ---------------------------------------------------------
+// 1) OpenAI 설정으로 변경
+// ---------------------------------------------------------
+// 실제 키는 환경 변수나 UserSecrets에서 가져오는 것을 권장합니다.
+// dotnet user-secrets로 설정한 값은 builder.Configuration["OpenAI:ApiKey"]로 읽을 수 있습니다.
+var apiKey = builder.Configuration["OpenAI:ApiKey"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+
+if (string.IsNullOrWhiteSpace(apiKey))
+{
+    throw new InvalidOperationException(
+        "OpenAI API key is not set. Set 'OpenAI:ApiKey' via dotnet user-secrets or 'OPENAI_API_KEY' environment variable.");
+}
+
+OpenAIClient openAiClient = new OpenAIClient(apiKey);
+
+IChatClient chatClient = openAiClient.GetChatClient("gpt-5-nano").AsIChatClient();
+
+// DI 컨테이너에 등록 (선택 사항이지만 다른 곳에서 주입받아 쓸 때 유용, 설계 고민)
+builder.Services.AddChatClient(chatClient);
 
 // 2) 기본 에이전트 등록
 builder.AddAIAgent(
     "writer",
     "You write short stories (max 300 words) about the given topic. " + "Write in a clear, engaging style.",
-    ollama
+    chatClient
 );
 
 builder.AddAIAgent(
     "editor",
     "You edit short stories to improve grammar and style. " + "Ensure the story stays under 300 words and keep the original meaning.",
-    ollama
+    chatClient
 );
 
 // 3) 선택: 툴 하나 추가 (예: 포맷팅)
@@ -42,7 +57,7 @@ string FormatStory(
 builder.AddAIAgent(
     "formatter",
     "You format stories for display; you do not change the content.",
-    ollama
+    chatClient
 ).WithAITools(AIFunctionFactory.Create(FormatStory, name: "format_story"));
 
 // 4) 워크플로우 등록: writer → editor → formatter 순차 실행
