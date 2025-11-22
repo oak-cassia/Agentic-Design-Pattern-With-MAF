@@ -27,20 +27,20 @@ IChatClient chatClient = openAiClient.GetChatClient("gpt-5-nano").AsIChatClient(
 
 builder.Services.AddChatClient(chatClient);
 
-builder.AddInquiryRouterAgent();
+builder.AddInquiryClassificationAgent();
 builder.AddL1ResolverAgent();
 builder.AddNotificationAgent();
 
 // 4) 워크플로우 등록: router → resolver → notifier 순차 실행
 builder.AddWorkflow("cs-workflow", (sp, key) =>
     {
-        var router = sp.GetRequiredKeyedService<AIAgent>(InquiryRouterAgent.NAME);
+        var classificator = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
         var resolver = sp.GetRequiredKeyedService<AIAgent>(L1ResolverAgent.NAME);
         var notifier = sp.GetRequiredKeyedService<AIAgent>(NotificationAgent.NAME);
 
         return AgentWorkflowBuilder.BuildSequential(
             workflowName: key,
-            router,
+            classificator,
             resolver,
             notifier
         );
