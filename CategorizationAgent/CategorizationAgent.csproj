@@ -10,6 +10,7 @@
     <ItemGroup>
         <PackageReference Include="Azure.AI.OpenAI" Version="2.5.0-beta.1"/>
         <PackageReference Include="Azure.Identity" Version="1.17.0"/>
+        <PackageReference Include="Google.Apis.Sheets.v4" Version="1.72.0.3966" />
         <PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-preview.251112.1"/>
         <PackageReference Include="Microsoft.Agents.AI.DevUI" Version="1.0.0-preview.251112.1" />
         <PackageReference Include="Microsoft.Agents.AI.Hosting" Version="1.0.0-preview.251112.1" />

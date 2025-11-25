@@ -5,6 +5,8 @@ using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using CategorizationAgent.Agents;
+using CategorizationAgent.Enums;
+using CategorizationAgent.Executors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,10 @@ OpenAIClient openAiClient = new OpenAIClient(apiKey);
 IChatClient chatClient = openAiClient.GetChatClient("gpt-5-nano").AsIChatClient();
 
 builder.Services.AddChatClient(chatClient);
+
+// CSV 기반 Inquiry Executor 등록
+var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "inquiries.csv");
+builder.Services.AddSingleton(new SimpleInquiryReadExecutor(csvFilePath));
 
 builder.AddInquiryClassificationAgent();
 builder.AddL1ResolverAgent();
@@ -57,6 +63,23 @@ app.MapOpenAIResponses();
 app.MapOpenAIConversations();
 
 app.UseHttpsRedirection();
+
+// 테스트용 엔드포인트: CSV에서 읽어온 문의 목록 확인
+app.MapGet("/api/inquiries", async (SimpleInquiryReadExecutor executor) =>
+{
+    var inquiries = await executor.ReadAllInquiriesAsync();
+    return Results.Ok(inquiries);
+});
+
+app.MapGet("/api/inquiries/status/{status}", async (string status, SimpleInquiryReadExecutor executor) =>
+{
+    if (Enum.TryParse<InquiryStatus>(status, ignoreCase: true, out var inquiryStatus))
+    {
+        var inquiries = await executor.ReadInquiriesByStatusAsync(inquiryStatus);
+        return Results.Ok(inquiries);
+    }
+    return Results.BadRequest("Invalid status");
+});
 
 // 필요하면 DevUI도
 
