@@ -5,7 +5,6 @@ using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using CategorizationAgent.Agents;
-using CategorizationAgent.Enums;
 using CategorizationAgent.Executors;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,13 +30,38 @@ builder.Services.AddChatClient(chatClient);
 
 // CSV 기반 Inquiry Executor 등록
 var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "inquiries.csv");
-builder.Services.AddSingleton(new SimpleInquiryReadExecutor(csvFilePath));
 
 builder.AddInquiryClassificationAgent();
 builder.AddL1ResolverAgent();
 builder.AddNotificationAgent();
 
-// 4) 워크플로우 등록: router → resolver → notifier 순차 실행
+// 문의 분류 워크플로우: CSV 읽기 → 분류 → 출력
+builder.AddWorkflow("inquiry-classification-workflow", (sp, key) =>
+    {
+        // 1. CSV 파일 읽기 Executor
+        var csvReader = new SimpleInquiryReadExecutor(csvFilePath);
+
+        // 2. 분류 Executor - AIAgent 전달
+        var classificationAgent = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
+        var classifier = new InquiryClassificationExecutor(classificationAgent);
+
+        // 3. 결과 출력 Executor
+        var printer = new ClassificationResultPrinterExecutor();
+
+        // 워크플로우 빌드: csvReader → classifier → printer
+        
+        var workflowBuilder = new WorkflowBuilder(csvReader);
+        
+        workflowBuilder.WithName(key);
+        workflowBuilder.AddEdge(csvReader, classifier);
+        workflowBuilder.AddEdge(classifier, printer);
+        workflowBuilder.WithOutputFrom(printer);
+
+        return workflowBuilder.Build();
+    })
+    .AddAsAIAgent(); // ← 워크플로우 자체를 하나의 AIAgent로 등록
+
+// 4) 원래 워크플로우 등록: router → resolver → notifier 순차 실행
 builder.AddWorkflow("cs-workflow", (sp, key) =>
     {
         var classificator = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
@@ -53,35 +77,50 @@ builder.AddWorkflow("cs-workflow", (sp, key) =>
     })
     .AddAsAIAgent(); // ← 워크플로우 자체를 하나의 AIAgent로 등록
 
-// 5) OpenAI 호환 엔드포인트 (원하면 DevUI도 같이)
+// 5) OpenAI 호환 엔드포인트 및 Tracing 설정
 builder.Services.AddOpenAIResponses();
 builder.Services.AddOpenAIConversations();
 
 var app = builder.Build();
 
-app.MapOpenAIResponses();
-app.MapOpenAIConversations();
+// 워크플로우 테스트 엔드포인트 추가
+app.MapGet("/run-classification", async (IServiceProvider sp) =>
+{
+    try
+    {
+        Console.WriteLine("\n🚀 문의 분류 워크플로우를 시작합니다...\n");
+        
+        var workflow = sp.GetRequiredKeyedService<Workflow>("inquiry-classification-workflow");
+        
+        // 워크플로우 실행 (입력은 빈 문자열, SimpleInquiryReadExecutor가 내부 _filePath 사용)
+        await using var run = await InProcessExecution.RunAsync(workflow, "");
+        
+        // 이벤트 처리
+        foreach (var evt in run.NewEvents)
+        {
+            if (evt is ExecutorCompletedEvent executorComplete)
+            {
+                Console.WriteLine($"✓ {executorComplete.ExecutorId} 완료");
+            }
+        }
+        
+        Console.WriteLine("\n✅ 워크플로우 실행이 완료되었습니다.\n");
+        
+        return Results.Ok(new { message = "워크플로우 실행 완료", success = true });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"\n❌ 워크플로우 실행 중 오류 발생: {ex.Message}");
+        Console.WriteLine(ex.StackTrace);
+        return Results.Problem(detail: ex.Message, title: "워크플로우 실행 오류");
+    }
+});
 
 app.UseHttpsRedirection();
 
-// 테스트용 엔드포인트: CSV에서 읽어온 문의 목록 확인
-app.MapGet("/api/inquiries", async (SimpleInquiryReadExecutor executor) =>
-{
-    var inquiries = await executor.ReadAllInquiriesAsync();
-    return Results.Ok(inquiries);
-});
-
-app.MapGet("/api/inquiries/status/{status}", async (string status, SimpleInquiryReadExecutor executor) =>
-{
-    if (Enum.TryParse<InquiryStatus>(status, ignoreCase: true, out var inquiryStatus))
-    {
-        var inquiries = await executor.ReadInquiriesByStatusAsync(inquiryStatus);
-        return Results.Ok(inquiries);
-    }
-    return Results.BadRequest("Invalid status");
-});
-
-// 필요하면 DevUI도
+// DevUI 초기 지원이라 아직 잘 안됨
+app.MapOpenAIResponses();
+app.MapOpenAIConversations();
 
 if (app.Environment.IsDevelopment())
 {

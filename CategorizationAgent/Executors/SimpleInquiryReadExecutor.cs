@@ -1,41 +1,57 @@
 using CategorizationAgent.DTOs;
 using CategorizationAgent.Enums;
+using System.Text;
+using Microsoft.Agents.AI.Workflows;
+using Microsoft.Agents.AI.Workflows.Reflection;
+using Microsoft.Extensions.AI;
 
 namespace CategorizationAgent.Executors;
 
-/// <summary>
-/// CSV 파일에서 문의 데이터를 읽어오는 간단한 Executor
-/// </summary>
-public class SimpleInquiryReadExecutor
+// ReflectingExecutor를 상속받고, IMessageHandler 인터페이스를 명시적으로 구현합니다.
+public class SimpleInquiryReadExecutor(string filePath) : ReflectingExecutor<SimpleInquiryReadExecutor>("SimpleInquiryReadExecutor"),
+    IMessageHandler<string, List<Inquiry>>,
+    IMessageHandler<List<ChatMessage>, List<Inquiry>>
 {
-    private readonly string _filePath;
-
-    public SimpleInquiryReadExecutor(string filePath)
+    public async ValueTask<List<Inquiry>> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = new CancellationToken())
     {
-        _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
-        
-        if (!File.Exists(_filePath))
-        {
-            throw new FileNotFoundException($"CSV 파일을 찾을 수 없습니다: {_filePath}");
-        }
+        return await ReadInquiriesFromCsvAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// CSV 파일에서 모든 문의를 읽어옵니다.
-    /// </summary>
-    public async Task<List<Inquiry>> ReadAllInquiriesAsync()
+    public async ValueTask<List<Inquiry>> HandleAsync(List<ChatMessage> message, IWorkflowContext context, CancellationToken cancellationToken = new CancellationToken())
     {
+        return await ReadInquiriesFromCsvAsync(cancellationToken);
+    }
+
+    #region Private Helper Methods
+
+    private async ValueTask<List<Inquiry>> ReadInquiriesFromCsvAsync(CancellationToken cancellationToken)
+    {
+        Console.WriteLine("SimpleInquiryReadExecutor Start");
+
+        // 1. 입력값(파일 경로) 유효성 검사
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentNullException(nameof(filePath), "CSV 파일 경로가 설정되지 않았습니다.");
+        }
+
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException($"CSV 파일을 찾을 수 없습니다: {filePath}");
+        }
+
+        // 2. 비동기 파일 읽기
         try
         {
-            var lines = await File.ReadAllLinesAsync(_filePath);
+            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
             var inquiries = new List<Inquiry>();
 
-            // 첫 번째 줄은 헤더이므로 건너뜀
+            // 3. 파싱 로직
             for (int i = 1; i < lines.Length; i++)
             {
+                if (cancellationToken.IsCancellationRequested) break;
+
                 var line = lines[i];
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
+                if (string.IsNullOrWhiteSpace(line)) continue;
 
                 var inquiry = ParseCsvLine(line);
                 if (inquiry != null)
@@ -46,9 +62,9 @@ public class SimpleInquiryReadExecutor
 
             return inquiries;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            throw new InvalidOperationException($"CSV 파일 읽기 실패: {_filePath}", ex);
+            throw new InvalidOperationException($"CSV 처리 중 오류 발생: {filePath}", ex);
         }
     }
 
@@ -56,11 +72,8 @@ public class SimpleInquiryReadExecutor
     {
         try
         {
-            // CSV 형식: id,userId,description,status
             var parts = SplitCsvLine(line);
-            
-            if (parts.Length < 4)
-                return null;
+            if (parts.Length < 4) return null;
 
             return new Inquiry
             {
@@ -82,7 +95,7 @@ public class SimpleInquiryReadExecutor
     private string[] SplitCsvLine(string line)
     {
         var result = new List<string>();
-        var currentField = new System.Text.StringBuilder();
+        var currentField = new StringBuilder();
         bool inQuotes = false;
 
         for (int i = 0; i < line.Length; i++)
@@ -108,22 +121,5 @@ public class SimpleInquiryReadExecutor
         return result.ToArray();
     }
 
-    /// <summary>
-    /// 특정 상태의 문의만 필터링하여 읽어옵니다.
-    /// </summary>
-    public async Task<List<Inquiry>> ReadInquiriesByStatusAsync(InquiryStatus status)
-    {
-        var allInquiries = await ReadAllInquiriesAsync();
-        return allInquiries.Where(i => i.Status == status).ToList();
-    }
-
-    /// <summary>
-    /// 특정 사용자의 문의만 필터링하여 읽어옵니다.
-    /// </summary>
-    public async Task<List<Inquiry>> ReadInquiriesByUserIdAsync(string userId)
-    {
-        var allInquiries = await ReadAllInquiriesAsync();
-        return allInquiries.Where(i => i.UserId == userId).ToList();
-    }
+    #endregion
 }
-

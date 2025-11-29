@@ -10,7 +10,7 @@ public static class InquiryClassificationAgent
     public const string NAME = "inquiry-classifier";
 
     // 2. 제공해주신 프롬프트 원문
-    private const string INSTRUCTIONS =
+    public const string INSTRUCTIONS =
         """
         당신은 고객 문의 분류 전문가입니다.
         입력으로 들어오는 한국어 또는 영어 문의 내용을 보고,
