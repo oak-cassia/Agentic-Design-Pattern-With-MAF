@@ -18,6 +18,12 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
     {
         var results = new List<ClassificationResult>();
 
+        // AIAgent를 ChatClientAgent로 캐스팅하여 구조화된 출력 기능을 사용합니다.
+        if (agent is not ChatClientAgent chatAgent)
+        {
+            throw new InvalidOperationException("InquiryClassificationExecutor requires a ChatClientAgent.");
+        }
+
         foreach (var inquiry in inquiries)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -28,19 +34,19 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
                 // 문의 내용을 Agent에 전달
                 var agentInput = $"문의 ID: {inquiry.Id}\n사용자: {inquiry.UserId}\n내용: {inquiry.Description}";
                 
-                // AIAgent 실행
-                var response = await agent.RunAsync(agentInput);
+                // AIAgent 실행 (구조화된 출력 요청)
+                // RunAsync<T>를 사용하면 프레임워크가 스키마 주입 및 파싱을 자동으로 처리합니다.
+                var response = await chatAgent.RunAsync<ClassificationResult>(agentInput, cancellationToken: cancellationToken);
                 
-                // 응답에서 텍스트 추출
-                var responseText = response.Text;
-                
-                // JSON 파싱 시도
-                var classificationResult = ParseClassificationResponse(responseText, inquiry);
+                var classificationResult = response.Result;
+
+                // AI가 생성하지 않는 컨텍스트 정보(ID, 원본 내용)를 채웁니다.
+                classificationResult.InquiryId = inquiry.Id;
+                classificationResult.InquiryDescription = inquiry.Description ?? "";
+
                 results.Add(classificationResult);
                 
-                var inquiryId = inquiry.Id.ToString();
-                var categoryName = classificationResult.CategoryNameKo;
-                Console.WriteLine($"[분류 완료] ID: {inquiryId}, 카테고리: {categoryName}");
+                Console.WriteLine($"[분류 완료] ID: {inquiry.Id}, 카테고리: {classificationResult.CategoryName}");
             }
             catch (Exception ex)
             {
@@ -50,12 +56,10 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
                 results.Add(new ClassificationResult
                 {
                     InquiryId = inquiry.Id,
+                    InquiryDescription = inquiry.Description ?? "",
                     CategoryId = 99,
-                    CategoryNameKo = "기타/분류 불가",
-                    CategoryNameEn = "OtherOrUnknown",
+                    CategoryName = "기타/분류 불가",
                     Confidence = 0.0,
-                    IsMultiLabel = false,
-                    SubCategories = new List<string>(),
                     Reason = $"분류 중 오류 발생: {ex.Message}",
                     Keywords = new List<string>()
                 });
@@ -64,58 +68,4 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
 
         return results;
     }
-
-    private ClassificationResult ParseClassificationResponse(string responseText, Inquiry inquiry)
-    {
-        try
-        {
-            // JSON 부분만 추출 (```json ... ``` 형태인 경우 처리)
-            var jsonText = ExtractJson(responseText);
-            
-            var jsonDoc = JsonDocument.Parse(jsonText);
-            var root = jsonDoc.RootElement;
-
-            return new ClassificationResult
-            {
-                InquiryId = inquiry.Id,
-                CategoryId = root.GetProperty("category_id").GetInt32(),
-                CategoryNameKo = root.GetProperty("category_name_ko").GetString() ?? "",
-                CategoryNameEn = root.GetProperty("category_name_en").GetString() ?? "",
-                Confidence = root.GetProperty("confidence").GetDouble(),
-                IsMultiLabel = root.GetProperty("is_multi_label").GetBoolean(),
-                SubCategories = JsonSerializer.Deserialize<List<string>>(
-                    root.GetProperty("sub_categories").GetRawText()) ?? new List<string>(),
-                Reason = root.GetProperty("reason").GetString() ?? "",
-                Keywords = JsonSerializer.Deserialize<List<string>>(
-                    root.GetProperty("keywords").GetRawText()) ?? new List<string>()
-            };
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException(
-                $"JSON 파싱 실패. 응답: {responseText}", ex);
-        }
-    }
-
-    private string ExtractJson(string text)
-    {
-        // ```json ... ``` 형태 처리
-        var startMarker = "```json";
-        var endMarker = "```";
-        
-        var startIndex = text.IndexOf(startMarker, StringComparison.OrdinalIgnoreCase);
-        if (startIndex >= 0)
-        {
-            startIndex += startMarker.Length;
-            var endIndex = text.IndexOf(endMarker, startIndex, StringComparison.OrdinalIgnoreCase);
-            if (endIndex > startIndex)
-            {
-                return text.Substring(startIndex, endIndex - startIndex).Trim();
-            }
-        }
-
-        // JSON 마커가 없으면 원본 반환
-        return text.Trim();
-    }
 }
-

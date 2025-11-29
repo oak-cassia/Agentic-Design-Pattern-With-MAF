@@ -1,49 +1,63 @@
+using CategorizationAgent.Agents;
 using CategorizationAgent.DTOs;
 using Microsoft.Agents.AI.Workflows;
+using System.Text.Json;
 
 namespace CategorizationAgent.Executors;
 
 /// <summary>
-/// 분류 결과 리스트를 받아서 콘솔에 출력하는 Executor
+/// 분류 결과 리스트를 받아서 카테고리 ID에 맞는 처리방법을 콘솔에 출력하는 Executor
 /// </summary>
 public class ClassificationResultPrinterExecutor() : Executor<List<ClassificationResult>, string>("ClassificationResultPrinterExecutor")
 {
+    private static readonly Dictionary<int, string> HandlingSummaries = LoadHandlingSummaries();
+
+    private static Dictionary<int, string> LoadHandlingSummaries()
+    {
+        var ruleFilePath = Path.Combine(Directory.GetCurrentDirectory(), "KnowledgeBase", InquiryClassificationAgent.RULE_FILE_NAME);
+        
+        if (!File.Exists(ruleFilePath))
+        {
+            Console.WriteLine($"Warning: Category rule file not found at {ruleFilePath}");
+            return new Dictionary<int, string>();
+        }
+
+        try
+        {
+            var json = File.ReadAllText(ruleFilePath);
+            var rules = JsonSerializer.Deserialize<List<CategoryRuleItem>>(json);
+            return rules?.ToDictionary(r => r.Id, r => r.HandlingSummary) ?? new Dictionary<int, string>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading rules: {ex.Message}");
+            return new Dictionary<int, string>();
+        }
+    }
+
     public override ValueTask<string> HandleAsync(List<ClassificationResult> results, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("\n" + new string('=', 80));
-        Console.WriteLine("📋 문의 분류 결과 리스트");
+        Console.WriteLine("📋 문의 분류 결과 및 처리방법");
         Console.WriteLine(new string('=', 80));
         Console.WriteLine($"총 {results.Count}건의 문의가 분류되었습니다.\n");
 
         foreach (var result in results)
         {
-            var inquiryId = result.InquiryId.ToString();
-            var categoryId = result.CategoryId.ToString();
-            var confidence = result.Confidence.ToString("P2");
-            var multiLabel = result.IsMultiLabel
-                ? "예"
-                : "아니오";
-
-            Console.WriteLine($"[문의 ID: {inquiryId}]");
-            Console.WriteLine($"  ├─ 카테고리 ID: {categoryId}");
-            Console.WriteLine($"  ├─ 카테고리 (한글): {result.CategoryNameKo}");
-            Console.WriteLine($"  ├─ 카테고리 (영문): {result.CategoryNameEn}");
-            Console.WriteLine($"  ├─ 신뢰도: {confidence}");
-            Console.WriteLine($"  ├─ 복합 문의: {multiLabel}");
-
-            if (result.SubCategories.Any())
+            Console.WriteLine($"[문의 ID: {result.InquiryId}]");
+            Console.WriteLine($"  📝 문의 내용: {result.InquiryDescription}");
+            Console.WriteLine($"\n  ✅ 분류 결과: {result.CategoryName} (ID: {result.CategoryId})");
+            
+            if (HandlingSummaries.TryGetValue(result.CategoryId, out var handlingSummary))
             {
-                var subCategories = string.Join(", ", result.SubCategories.ToArray());
-                Console.WriteLine($"  ├─ 하위 카테고리: {subCategories}");
+                Console.WriteLine($"\n  📌 처리방법:");
+                Console.WriteLine($"  {handlingSummary}");
             }
-
-            if (result.Keywords.Any())
+            else
             {
-                var keywords = string.Join(", ", result.Keywords.ToArray());
-                Console.WriteLine($"  ├─ 키워드: {keywords}");
+                Console.WriteLine($"  ⚠️  처리방법 정보를 찾을 수 없습니다. (Category ID: {result.CategoryId})");
             }
-
-            Console.WriteLine($"  └─ 이유: {result.Reason}");
+            
             Console.WriteLine();
         }
 

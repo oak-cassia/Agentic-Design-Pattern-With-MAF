@@ -1,52 +1,51 @@
 id,userId,description,status
-1,user_1001,튜토리얼 완료했는데 시작 보상 아이템이 인벤토리에 없습니다. 확인 부탁드려요.,NEW
-2,user_1002,I finished the beginner guide, but didn't get the welcome reward.,NEW
-3,user_1003,초보자 미션 3단계까지 깼는데 보상 수령 버튼이 비활성화되어 있습니다.,NEW
-4,user_1004,가이드 퀘스트 다 밀었는데 왜 골드가 안 들어오죠?,NEW
-5,user_1005,Where is my tutorial reward? I checked my mailbox.,NEW
-6,user_2001,어제 구매한 전설검이 갑자기 인벤토리에서 사라졌습니다.,NEW
-7,user_2002,I accidentally deleted my rare armor. Can I recover it?,NEW
-8,user_2003,강화하다가 실수로 파괴한 건 아닌데 아이템이 없어졌어요.,NEW
-9,user_2004,Please check if I sold my ring or if it just disappeared.,NEW
-10,user_2005,창고에 넣어둔 아이템이 증발했습니다. 로그 확인 좀 해주세요.,NEW
-11,user_3001,크리스마스 이벤트 참여했는데 산타 모자 코스튬이 안 들어왔습니다.,NEW
-12,user_3002,Participated in the weekend event but reward is missing.,NEW
-13,user_3003,이벤트 랭킹 100위 안에 들었는데 특별 칭호가 지급되지 않았어요.,NEW
-14,user_3004,우편함에 들어와있던 출석 체크 보상이 받기도 전에 사라졌습니다.,NEW
-15,user_3005,Hot-time event reward was not sent to my account.,NEW
-16,user_4001,일일 퀘스트 5개 다 완료했는데 완료 처리가 안 됩니다.,NEW
-17,user_4002,Daily mission completed but gold count did not increase.,NEW
-18,user_4003,오늘자 데일리 보상만 수령이 안 되네요. 버그인가요?,NEW
-19,user_4004,하루 한 번 미션 깼는데 보상 상자가 안 열립니다.,NEW
-20,user_4005,Did the daily quest reset? My progress is gone.,NEW
-21,user_5001,길드 레이드 참여했는데 참여 보상이 안 들어옵니다.,NEW
-22,user_5002,Our clan points are not updating after the match.,NEW
-23,user_5003,팀 탈퇴하고 새로 가입했는데 이전 팀 포인트가 남아있어서 활동이 안 돼요.,NEW
-24,user_5004,길드 기여도 점수 집계가 며칠째 멈춰있습니다.,NEW
-25,user_5005,Guild membership reward is locked even though I joined last week.,NEW
-26,user_6001,10회 구매 시 보너스 준다고 했는데 카운트가 9에서 멈췄어요.,NEW
-27,user_6002,Purchase count mismatch. I bought the pack 3 times but it says 2.,NEW
-28,user_6003,누적 결제 보상 횟수가 실제 결제 내역이랑 다릅니다.,NEW
-29,user_6004,마일리지 적립 횟수가 누락된 것 같습니다. 확인해 주세요.,NEW
-30,user_6005,Bonus reward count is wrong. Please fix it.,NEW
-31,user_7001,확률 조작 아닙니까? 100번 뽑았는데 S급이 하나도 안 나와요.,NEW
-32,user_7002,Gacha rates seem wrong. Open 50 boxes, zero rares.,NEW
-33,user_7003,전설 뽑기 확률 5%라면서요? 왜 200번 돌려도 안 나옵니까?,NEW
-34,user_7004,랜덤 박스 구성품 확률이 공지된 거랑 다른 거 같습니다.,NEW
-35,user_7005,I spent too much on this lucky draw but got nothing good. Is it bugged?,NEW
-36,user_8001,멤버십 기간이 왜 벌써 끝났죠? 아직 이틀 남았는데요.,NEW
-37,user_8002,Need to adjust my subscription period due to yesterday's server maintenance.,NEW
-38,user_8003,월정액 상품 구매했는데 기간 연장이 안 되고 있습니다.,NEW
-39,user_8004,구독 갱신했는데 만료일이 업데이트가 안 됐어요.,NEW
-40,user_8005,Please extend my premium pass by 3 days.,NEW
-41,user_9801,구독 기간도 이상하고, 어제 튜토리얼 보상도 못 받았어요. 둘 다 해결해 주세요.,NEW
-42,user_9802,Daily mission reward missing and my subscription days are wrong.,NEW
-43,user_9803,이벤트 보상도 안 들어오고 구매 카운트도 적용 안 됐습니다. 총체적 난국이네요.,NEW
-44,user_9804,Guild reward is missing and I lost my item from inventory.,NEW
-45,user_9805,확률형 아이템 뽑았는데 안 나오고, 결제 횟수도 안 올라갔어요.,NEW
-46,user_9901,게임이 자꾸 튕깁니다. 접속이 안 돼요.,NEW
-47,user_9902,I want a refund for the game purchase.,NEW
-48,user_9903,욕설하는 유저 신고합니다. 아이디는 user_bad입니다.,NEW
-49,user_9904,How do I change my account password?,NEW
-50,user_9905,캐릭터 밸런스 패치 좀 제대로 해주세요.,NEW
-
+1,user_1001,튜토리얼을 완료했으나 시작 보상 아이템이 인벤토리에 없어 확인 부탁드립니다.,NEW
+2,user_1002,초보자 가이드를 모두 마쳤으나 환영 보상이 지급되지 않아 확인을 요청드립니다.,NEW
+3,user_1003,초보자 미션 3단계를 완료했는데 보상 수령 버튼이 비활성화되어 있어 조치 부탁드립니다.,NEW
+4,user_1004,가이드 퀘스트를 모두 마쳤는데 골드가 지급되지 않아 확인 부탁드립니다.,NEW
+5,user_1005,튜토리얼 보상이 지급되지 않아 우편함까지 확인했으니 다시 확인 부탁드립니다.,NEW
+6,user_2001,어제 구매한 전설검이 인벤토리에서 사라져 확인 부탁드립니다.,NEW
+7,user_2002,실수로 희귀 방어구를 삭제했는데 복구 가능 여부를 안내해 주시기 바랍니다.,NEW
+8,user_2003,강화 중 파괴하지 않았는데 아이템이 사라져 원인 확인 부탁드립니다.,NEW
+9,user_2004,반지를 제가 판매했는지 아니면 사라졌는지 확인해 주시면 감사하겠습니다.,NEW
+10,user_2005,창고에 보관한 아이템이 사라졌으니 로그 확인 부탁드립니다.,NEW
+11,user_3001,크리스마스 이벤트에 참여했지만 산타 모자 코스튬이 지급되지 않아 확인 부탁드립니다.,NEW
+12,user_3002,주말 이벤트에 참여했으나 보상이 지급되지 않아 확인을 요청드립니다.,NEW
+13,user_3003,이벤트 랭킹 100위 안에 들었는데 특별 칭호가 지급되지 않아 조치 부탁드립니다.,NEW
+14,user_3004,우편함에 있던 출석 체크 보상이 수령 전에 사라져 확인 부탁드립니다.,NEW
+15,user_3005,핫타임 이벤트 보상이 계정으로 지급되지 않아 확인 부탁드립니다.,NEW
+16,user_4001,일일 퀘스트 5개를 모두 완료했는데 완료 처리가 되지 않아 확인 부탁드립니다.,NEW
+17,user_4002,일일 임무를 완료했지만 골드 수량이 증가하지 않아 확인 부탁드립니다.,NEW
+18,user_4003,오늘 데일리 보상만 수령이 되지 않아 버그 여부를 확인 부탁드립니다.,NEW
+19,user_4004,하루 한 번 미션을 완료했는데 보상 상자가 열리지 않아 확인 부탁드립니다.,NEW
+20,user_4005,일일 퀘스트 진행도가 초기화된 것 같으니 확인 부탁드립니다.,NEW
+21,user_5001,길드 레이드에 참여했는데 참여 보상이 지급되지 않아 확인 부탁드립니다.,NEW
+22,user_5002,경기 후에도 클랜 포인트가 갱신되지 않아 확인 부탁드립니다.,NEW
+23,user_5003,팀 탈퇴 후 재가입했는데 이전 팀 포인트가 남아 활동이 제한되어 조치 부탁드립니다.,NEW
+24,user_5004,길드 기여도 점수 집계가 며칠째 멈춰 있어 확인 부탁드립니다.,NEW
+25,user_5005,지난주에 길드에 가입했는데 가입 보상이 잠겨 있어 확인 부탁드립니다.,NEW
+26,user_6001,10회 구매 보너스를 약속받았는데 카운트가 9에서 멈춰 확인 부탁드립니다.,NEW
+27,user_6002,패키지를 세 번 구매했음에도 구매 횟수가 두 번으로 표시되어 확인 부탁드립니다.,NEW
+28,user_6003,누적 결제 보상 횟수가 실제 결제 내역과 달라 확인 부탁드립니다.,NEW
+29,user_6004,마일리지 적립 횟수가 누락된 것 같으니 확인 부탁드립니다.,NEW
+30,user_6005,보너스 보상 횟수가 잘못 표시되어 있으니 수정 부탁드립니다.,NEW
+31,user_7001,확률형 뽑기를 100회 진행했는데 S급이 한 번도 나오지 않아 확률 확인 부탁드립니다.,NEW
+32,user_7002,상자 50개를 열었지만 레어 아이템이 없어 가차 확률을 확인 부탁드립니다.,NEW
+33,user_7003,전설 뽑기 확률이 5%라 안내되었으나 200회 시도에도 등장하지 않아 확인 부탁드립니다.,NEW
+34,user_7004,랜덤 박스 구성품 확률이 공지와 다른 것 같으니 확인 부탁드립니다.,NEW
+35,user_7005,행운 뽑기에 많은 비용을 사용했지만 좋은 아이템이 없어 오류 여부를 확인 부탁드립니다.,NEW
+36,user_8001,멤버십 기간이 아직 이틀 남았는데 이미 종료되어 확인 부탁드립니다.,NEW
+37,user_8002,어제 서버 점검 영향으로 구독 기간 조정이 필요하니 안내 부탁드립니다.,NEW
+38,user_8003,월정액 상품을 구매했는데 기간이 연장되지 않아 확인 부탁드립니다.,NEW
+39,user_8004,구독을 갱신했지만 만료일이 업데이트되지 않아 확인 부탁드립니다.,NEW
+40,user_8005,프리미엄 패스를 3일 연장해 주시길 요청드립니다.,NEW
+41,user_9801,구독 기간이 비정상이고 전날 튜토리얼 보상도 받지 못했으니 두 건 모두 확인 부탁드립니다.,NEW
+42,user_9802,일일 미션 보상이 지급되지 않고 구독 일수도 잘못되어 확인 부탁드립니다.,NEW
+43,user_9803,이벤트 보상과 구매 카운트가 모두 적용되지 않아 조속한 확인 부탁드립니다.,NEW
+44,user_9804,길드 보상이 없고 인벤토리 아이템도 사라져 두 건 모두 확인 부탁드립니다.,NEW
+45,user_9805,확률형 아이템이 나오지 않고 결제 횟수도 증가하지 않아 확인 부탁드립니다.,NEW
+46,user_9901,게임이 계속 튕겨 접속이 불가능하니 확인 부탁드립니다.,NEW
+47,user_9902,게임 구매에 대한 환불을 요청드리오니 절차를 안내해 주시기 바랍니다.,NEW
+48,user_9903,욕설을 한 유저(user_bad)를 신고하오니 조치 부탁드립니다.,NEW
+49,user_9904,계정 비밀번호 변경 방법을 안내해 주시기 바랍니다.,NEW
+50,user_9905,캐릭터 밸런스 패치를 보다 적절히 진행해 주시기 바랍니다.,NEW
