@@ -2,7 +2,7 @@ namespace CategorizationAgent.Enums;
 
 public enum InquiryStatus
 {
-    NEW,
+    New,
     InProgress,
     OnHold,
     Resolved,
