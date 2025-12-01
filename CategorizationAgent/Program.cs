@@ -6,8 +6,20 @@ using Microsoft.Extensions.AI;
 using OpenAI;
 using CategorizationAgent.Agents;
 using CategorizationAgent.Executors;
+using CategorizationAgent.Data;
+using CategorizationAgent.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
+
+builder.Services.AddDbContext<LogDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+builder.Services.AddScoped<MailboxService>();
 
 // ---------------------------------------------------------
 // 1) OpenAI 설정으로 변경
