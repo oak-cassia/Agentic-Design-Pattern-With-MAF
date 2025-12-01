@@ -1,18 +1,21 @@
 using Microsoft.Agents.AI;
-using Microsoft.Agents.AI.DevUI;
+using Microsoft.Agents.AI.DevUI; // DevUI 사용 시
 using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI.Workflows;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using OpenAI;
+// (사용자 정의 네임스페이스)
 using CategorizationAgent.Agents;
 using CategorizationAgent.Executors;
 using CategorizationAgent.Data;
 using CategorizationAgent.Services;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+// ============================================================
+// 1. 기본 인프라 및 DB 서비스 등록
+// ============================================================
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
 
@@ -21,94 +24,103 @@ builder.Services.AddDbContext<LogDbContext>(options =>
 
 builder.Services.AddScoped<MailboxService>();
 builder.Services.AddScoped<UserNumberService>();
+// Executor가 상태를 가지지 않는다면 Scoped/Singleton으로 등록 가능
+builder.Services.AddScoped<MailboxStatusExecutor>(); 
 
-// ---------------------------------------------------------
-// 1) OpenAI 설정으로 변경
-// ---------------------------------------------------------
-// 실제 키는 환경 변수나 UserSecrets에서 가져오는 것을 권장합니다.
-// dotnet user-secrets로 설정한 값은 builder.Configuration["OpenAI:ApiKey"]로 읽을 수 있습니다.
-var apiKey = builder.Configuration["OpenAI:ApiKey"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+// ============================================================
+// 2. AI 클라이언트 설정 (표준 패턴)
+// ============================================================
+// IChatClient를 DI 컨테이너에 등록하여 모든 Agent가 이를 공유하도록 합니다.
+var apiKey = builder.Configuration["OpenAI:ApiKey"] 
+             ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+             ?? throw new InvalidOperationException("OpenAI API key is not set.");
 
-if (string.IsNullOrWhiteSpace(apiKey))
-{
-    throw new InvalidOperationException(
-        "OpenAI API key is not set. Set 'OpenAI:ApiKey' via dotnet user-secrets or 'OPENAI_API_KEY' environment variable.");
-}
+// OpenAI 클라이언트 설정
+IChatClient chatClient = new OpenAIClient(apiKey)
+    .GetChatClient("gpt-4o-mini") // 모델명 지정
+    .AsIChatClient();
 
-OpenAIClient openAiClient = new OpenAIClient(apiKey);
-
-IChatClient chatClient = openAiClient.GetChatClient("gpt-5-nano").AsIChatClient();
-
+// 프레임워크 표준 확장 메서드를 사용하여 ChatClient 등록
 builder.Services.AddChatClient(chatClient);
 
-// CSV 기반 Inquiry Executor 등록
-var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample", "inquiries.csv");
+// ============================================================
+// 3. 에이전트(Agent) 등록
+// ============================================================
+// 사용자 정의 확장 메서드(AddInquiryClassificationAgent 등)가 내부적으로 
+// builder.AddAIAgent(...)를 호출한다고 가정합니다.
+// 만약 직접 등록한다면 아래와 같은 형태가 됩니다:
+// builder.AddAIAgent("InquiryClassificationAgent", instructions: "...");
 
 builder.AddInquiryClassificationAgent();
 builder.AddL1ResolverAgent();
 builder.AddNotificationAgent();
 
-// 문의 분류 워크플로우: CSV 읽기 → 분류 → 출력
+// ============================================================
+// 4. 워크플로우(Workflow) 등록
+// ============================================================
 builder.AddWorkflow("inquiry-classification-workflow", (sp, key) =>
-    {
-        // 1. CSV 파일 읽기 Executor
-        var csvReader = new SimpleInquiryReadExecutor(csvFilePath);
+{
+    // 1. 필요한 리소스 준비
+    var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample", "inquiries.csv");
+    
+    // 2. Executor 인스턴스 생성 (필요 시 SP에서 주입)
+    var csvReader = new SimpleInquiryReadExecutor(csvFilePath);
+    
+    // Keyed Service로 등록된 Agent를 가져와서 Executor에 주입
+    var classificationAgent = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
+    var classifier = new InquiryClassificationExecutor(classificationAgent);
+    
+    var printer = new ClassificationResultPrinterExecutor();
 
-        // 2. 분류 Executor - AIAgent 전달
-        var classificationAgent = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
-        var classifier = new InquiryClassificationExecutor(classificationAgent);
+    // 3. 워크플로우 빌드
+    var workflowBuilder = new WorkflowBuilder(csvReader);
+    workflowBuilder.WithName(key);
+    
+    workflowBuilder
+        .AddEdge(csvReader, classifier)
+        .AddEdge(classifier, printer)
+        .WithOutputFrom(printer);
 
-        // 3. 결과 출력 Executor
-        var printer = new ClassificationResultPrinterExecutor();
+    return workflowBuilder.Build();
+});
+// .AddAsAIAgent(); // 이 워크플로우를 다른 워크플로우의 하위 에이전트로 쓸 때만 주석 해제
 
-        // 워크플로우 빌드: csvReader → classifier → printer
-        
-        var workflowBuilder = new WorkflowBuilder(csvReader);
-        
-        workflowBuilder.WithName(key);
-        workflowBuilder.AddEdge(csvReader, classifier);
-        workflowBuilder.AddEdge(classifier, printer);
-        workflowBuilder.WithOutputFrom(printer);
-
-        return workflowBuilder.Build();
-    })
-    .AddAsAIAgent(); // ← 워크플로우 자체를 하나의 AIAgent로 등록
-
-// 4) 원래 워크플로우 등록: router → resolver → notifier 순차 실행
-builder.AddWorkflow("cs-workflow", (sp, key) =>
-    {
-        var classificator = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
-        var resolver = sp.GetRequiredKeyedService<AIAgent>(L1ResolverAgent.NAME);
-        var notifier = sp.GetRequiredKeyedService<AIAgent>(NotificationAgent.NAME);
-
-        return AgentWorkflowBuilder.BuildSequential(
-            workflowName: key,
-            classificator,
-            resolver,
-            notifier
-        );
-    })
-    .AddAsAIAgent(); // ← 워크플로우 자체를 하나의 AIAgent로 등록
-
-// 5) OpenAI 호환 엔드포인트 및 Tracing 설정
+// ============================================================
+// 5. DevUI 및 호스팅 서비스 설정 (표준 패턴)
+// ============================================================
+// 이 서비스들은 DevUI 및 에이전트 상태 관리에 필수적입니다.
 builder.Services.AddOpenAIResponses();
 builder.Services.AddOpenAIConversations();
 
 var app = builder.Build();
 
-// 워크플로우 테스트 엔드포인트 추가
-app.MapGet("/run-classification", async (IServiceProvider sp) =>
+// ============================================================
+// 6. 파이프라인 및 엔드포인트 설정
+// ============================================================
+app.UseHttpsRedirection();
+
+// DevUI 및 OpenAI 호환 엔드포인트 매핑
+app.MapOpenAIResponses();
+app.MapOpenAIConversations();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapDevUI(); // /devui 경로로 접근 가능
+}
+
+// 워크플로우 실행 엔드포인트
+app.MapGet("/run-classification", async (
+    [FromKeyedServices("inquiry-classification-workflow")] Workflow workflow, 
+    CancellationToken ct) =>
 {
     try
     {
         Console.WriteLine("\n🚀 문의 분류 워크플로우를 시작합니다...\n");
-        
-        var workflow = sp.GetRequiredKeyedService<Workflow>("inquiry-classification-workflow");
-        
-        // 워크플로우 실행 (입력은 빈 문자열, SimpleInquiryReadExecutor가 내부 _filePath 사용)
-        await using var run = await InProcessExecution.RunAsync(workflow, "");
-        
-        // 이벤트 처리
+
+        // 스트리밍 실행 또는 일반 실행
+        await using var run = await InProcessExecution.RunAsync(workflow, "", cancellationToken: ct);
+
+        // 실행 결과 로그 출력 (이벤트 기반)
         foreach (var evt in run.NewEvents)
         {
             if (evt is ExecutorCompletedEvent executorComplete)
@@ -116,28 +128,16 @@ app.MapGet("/run-classification", async (IServiceProvider sp) =>
                 Console.WriteLine($"✓ {executorComplete.ExecutorId} 완료");
             }
         }
-        
+
         Console.WriteLine("\n✅ 워크플로우 실행이 완료되었습니다.\n");
-        
         return Results.Ok(new { message = "워크플로우 실행 완료", success = true });
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"\n❌ 워크플로우 실행 중 오류 발생: {ex.Message}");
-        Console.WriteLine(ex.StackTrace);
-        return Results.Problem(detail: ex.Message, title: "워크플로우 실행 오류");
+        // 실제 프로덕션에서는 로거(ILogger)를 사용하세요.
+        Console.WriteLine($"\n❌ 오류 발생: {ex.Message}");
+        return Results.Problem(detail: ex.Message);
     }
 });
-
-app.UseHttpsRedirection();
-
-// DevUI 초기 지원이라 아직 잘 안됨
-app.MapOpenAIResponses();
-app.MapOpenAIConversations();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapDevUI();
-}
 
 app.Run();
