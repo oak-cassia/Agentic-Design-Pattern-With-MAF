@@ -20,6 +20,7 @@ builder.Services.AddDbContext<LogDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 builder.Services.AddScoped<MailboxService>();
+builder.Services.AddScoped<UserNumberService>();
 
 // ---------------------------------------------------------
 // 1) OpenAI 설정으로 변경
@@ -41,7 +42,7 @@ IChatClient chatClient = openAiClient.GetChatClient("gpt-5-nano").AsIChatClient(
 builder.Services.AddChatClient(chatClient);
 
 // CSV 기반 Inquiry Executor 등록
-var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "inquiries.csv");
+var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample", "inquiries.csv");
 
 builder.AddInquiryClassificationAgent();
 builder.AddL1ResolverAgent();
