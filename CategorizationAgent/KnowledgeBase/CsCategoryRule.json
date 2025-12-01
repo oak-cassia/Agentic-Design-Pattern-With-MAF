@@ -4,7 +4,7 @@
         "name_ko": "초보자 가이드 공략 보상",
         "name_en": "SummonerPathGuideReward",
         "description": "초보자 가이드에서 공략 정보 보기 보상(유닛 등)을 받지 못했다는 문의",
-        "handling_summary": "핵심 테이블: 우편함 로그 테이블, 캐릭터 삭제 로그 테이블. 핵심 칼럼: mail_state, delete_type, unit_id. 1) 확인(Check): 우편함 로그 테이블에서 공략 보상 지급/삭제 여부와 소급 지급 메일 발송 여부를 조회한다. 2) 추가 검증(Additional verification): 캐릭터 삭제 로그 테이블을 함께 조회해 보상 수령 후 삭제·소비 여부를 확인한다. 3) 판단(Decision): 지급 기록이 있고 수령/만료/미발송 상태에 따라 정책에 맞게 재지급 여부를 결정하고, 그 근거를 설명한다."
+        "handling_summary": "핵심 테이블: 우편함 로그 테이블. 핵심 칼럼: user_id, mail_state, item_type, item_id, message_id. 1) 확인(Check): 우편함 로그 테이블에서 공략 보상 수령/삭제 여부를 확인한다. 2) 판단(Decision): 우편함 로그가 있다면 수령/만료 상태를 알린다. 아니라면 개발자의 확인이 필요한 상태이다."
     },
     {
         "id": 2,
