@@ -3,7 +3,6 @@ using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Data;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace CategorizationAgent.Agents;
 
@@ -22,7 +21,7 @@ public static class InquiryClassificationAgent
         """;
 
     // JSON 데이터를 미리 로드
-    private static List<CategoryRuleItem> _categoryRules = LoadCategoryRules();
+    private static readonly List<CategoryRuleItem> CategoryRules = LoadCategoryRules();
 
     private static List<CategoryRuleItem> LoadCategoryRules()
     {
@@ -53,7 +52,7 @@ public static class InquiryClassificationAgent
         var results = new List<TextSearchProvider.TextSearchResult>();
 
         // query(사용자 질문) 내용은 무시하고, 로드된 모든 룰을 변환하여 반환합니다.
-        foreach (var item in _categoryRules)
+        foreach (var item in CategoryRules)
         {
             results.Add(new TextSearchProvider.TextSearchResult
             {

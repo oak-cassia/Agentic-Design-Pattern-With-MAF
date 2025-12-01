@@ -1,7 +1,6 @@
 using CategorizationAgent.DTOs;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using System.Text.Json;
 
 namespace CategorizationAgent.Executors;
 
