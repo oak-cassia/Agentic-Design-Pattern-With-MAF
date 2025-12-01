@@ -55,4 +55,10 @@ public class ClassificationResult
     [JsonPropertyName("keywords")]
     [Description("문의 내용에서 추출한 주요 키워드 목록")]
     public List<string> Keywords { get; set; } = new();
+
+    /// <summary>
+    /// 사용자 ID (입력값에서 복사됨)
+    /// </summary>
+    [JsonIgnore]
+    public string UserId { get; set; } = string.Empty;
 }

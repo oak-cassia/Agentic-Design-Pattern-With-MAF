@@ -42,6 +42,7 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
                 // AI가 생성하지 않는 컨텍스트 정보(ID, 원본 내용)를 채웁니다.
                 classificationResult.InquiryId = inquiry.Id;
                 classificationResult.InquiryDescription = inquiry.Description ?? "";
+                classificationResult.UserId = inquiry.UserId ?? string.Empty;
 
                 results.Add(classificationResult);
                 
@@ -56,6 +57,7 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
                 {
                     InquiryId = inquiry.Id,
                     InquiryDescription = inquiry.Description ?? "",
+                    UserId = inquiry.UserId ?? string.Empty,
                     CategoryId = 99,
                     CategoryName = "기타/분류 불가",
                     Confidence = 0.0,
