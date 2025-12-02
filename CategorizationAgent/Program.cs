@@ -25,7 +25,6 @@ builder.Services.AddDbContext<LogDbContext>(options =>
 builder.Services.AddScoped<MailboxService>();
 builder.Services.AddScoped<UserNumberService>();
 // Executor가 상태를 가지지 않는다면 Scoped/Singleton으로 등록 가능
-builder.Services.AddScoped<MailboxStatusExecutor>(); 
 
 // ============================================================
 // 2. AI 클라이언트 설정 (표준 패턴)
