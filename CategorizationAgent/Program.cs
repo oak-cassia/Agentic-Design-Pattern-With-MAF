@@ -24,6 +24,7 @@ builder.Services.AddDbContext<LogDbContext>(options =>
 
 builder.Services.AddScoped<MailboxService>();
 builder.Services.AddScoped<UserNumberService>();
+builder.Services.AddSingleton<CsvService>(); // CSV 서비스 등록
 // Executor가 상태를 가지지 않는다면 Scoped/Singleton으로 등록 가능
 
 // ============================================================
@@ -61,9 +62,10 @@ builder.AddWorkflow("inquiry-classification-workflow", (sp, key) =>
 {
     // 1. 필요한 리소스 준비
     var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample", "inquiries.csv");
+    var csvService = sp.GetRequiredService<CsvService>();
     
-    // 2. Executor 인스턴스 생성 (필요 시 SP에서 주입)
-    var csvReader = new SimpleInquiryReadExecutor(csvFilePath);
+    // 2. Executor 인스턴스 생성 (CsvService 주입)
+    var csvReader = new SimpleInquiryReadExecutor(csvFilePath, csvService);
     
     // Keyed Service로 등록된 Agent를 가져와서 Executor에 주입
     var classificationAgent = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
