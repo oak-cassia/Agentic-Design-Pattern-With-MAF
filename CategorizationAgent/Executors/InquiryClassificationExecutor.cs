@@ -33,9 +33,18 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
                 // 문의 내용을 Agent에 전달
                 var agentInput = $"문의 ID: {inquiry.Id}\n사용자: {inquiry.UserId}\n내용: {inquiry.Description}";
                 
+                // CRITICAL FIX:
+                // Create a NEW thread for each inquiry to ensure context isolation.
+                // If we reuse a thread, the agent remembers previous inquiries, 
+                // polluting context and wasting tokens.
+                var isolatedThread = chatAgent.GetNewThread();
+
                 // AIAgent 실행 (구조화된 출력 요청)
-                // RunAsync<T>를 사용하면 프레임워크가 스키마 주입 및 파싱을 자동으로 처리합니다.
-                var response = await chatAgent.RunAsync<ClassificationResult>(agentInput, cancellationToken: cancellationToken);
+                // Pass the isolatedThread to RunAsync
+                var response = await chatAgent.RunAsync<ClassificationResult>(
+                    agentInput, 
+                    isolatedThread, 
+                    cancellationToken: cancellationToken);
                 
                 var classificationResult = response.Result;
 
@@ -47,6 +56,9 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
                 results.Add(classificationResult);
                 
                 Console.WriteLine($"[분류 완료] ID: {inquiry.Id}, 카테고리: {classificationResult.CategoryName}");
+
+                // Optional: Explicitly delete the thread if the underlying storage requires cleanup
+                // await chatAgent.DeleteThreadAsync(isolatedThread.Id, cancellationToken);
             }
             catch (Exception ex)
             {

@@ -36,7 +36,7 @@ var apiKey = builder.Configuration["OpenAI:ApiKey"]
 
 // OpenAI 클라이언트 설정
 IChatClient chatClient = new OpenAIClient(apiKey)
-    .GetChatClient("gpt-4o-mini") // 모델명 지정
+    .GetChatClient("gpt-5-nano") // 모델명 지정
     .AsIChatClient();
 
 // 프레임워크 표준 확장 메서드를 사용하여 ChatClient 등록
@@ -109,15 +109,14 @@ if (app.Environment.IsDevelopment())
 
 // 워크플로우 실행 엔드포인트
 app.MapGet("/run-classification", async (
-    [FromKeyedServices("inquiry-classification-workflow")] Workflow workflow, 
-    CancellationToken ct) =>
+    [FromKeyedServices("inquiry-classification-workflow")] Workflow workflow) =>
 {
     try
     {
         Console.WriteLine("\n🚀 문의 분류 워크플로우를 시작합니다...\n");
 
         // 스트리밍 실행 또는 일반 실행
-        await using var run = await InProcessExecution.RunAsync(workflow, "", cancellationToken: ct);
+        await using var run = await InProcessExecution.RunAsync(workflow, "");
 
         // 실행 결과 로그 출력 (이벤트 기반)
         foreach (var evt in run.NewEvents)
