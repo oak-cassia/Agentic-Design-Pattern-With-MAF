@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using CategorizationAgent.Enums;
 
 namespace CategorizationAgent.Data.Models;
 
@@ -13,7 +14,7 @@ public class MailboxLog
     public long UserId { get; set; }
         
     [Column("message_id")]
-    public string MessageId { get; set; } = string.Empty;
+    public int MessageId { get; set; }
         
     [Column("item_type")]
     public int ItemType { get; set; }
@@ -23,7 +24,7 @@ public class MailboxLog
         
     // 0: 수령전, 1: 수령완료, 2: 만료/삭제
     [Column("mail_state")]
-    public int MailState { get; set; } 
+    public MailStatus MailState { get; set; } 
         
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
