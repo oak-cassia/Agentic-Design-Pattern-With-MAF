@@ -16,24 +16,23 @@ var builder = WebApplication.CreateBuilder(args);
 // ============================================================
 // 1. 기본 인프라 및 DB 서비스 등록
 // ============================================================
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
 
 builder.Services.AddDbContext<LogDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-builder.Services.AddScoped<MailboxService>();
-builder.Services.AddScoped<UserNumberService>();
+builder.Services.AddTransient<MailboxService>();
+builder.Services.AddTransient<UserNumberService>();
 builder.Services.AddSingleton<CsvService>(); // CSV 서비스 등록
+builder.Services.AddTransient<BeginnerRewardService>(); // 초보자 보상 서비스
+builder.Services.AddTransient<CategoryActionService>(); // 카테고리 액션 서비스
 // Executor가 상태를 가지지 않는다면 Scoped/Singleton으로 등록 가능
 
 // ============================================================
 // 2. AI 클라이언트 설정 (표준 패턴)
 // ============================================================
 // IChatClient를 DI 컨테이너에 등록하여 모든 Agent가 이를 공유하도록 합니다.
-var apiKey = builder.Configuration["OpenAI:ApiKey"] 
-             ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY")
-             ?? throw new InvalidOperationException("OpenAI API key is not set.");
+var apiKey = builder.Configuration["OpenAI:ApiKey"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? throw new InvalidOperationException("OpenAI API key is not set.");
 
 // OpenAI 클라이언트 설정
 IChatClient chatClient = new OpenAIClient(apiKey)
@@ -63,20 +62,20 @@ builder.AddWorkflow("inquiry-classification-workflow", (sp, key) =>
     // 1. 필요한 리소스 준비
     var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample", "inquiries.csv");
     var csvService = sp.GetRequiredService<CsvService>();
-    
+
     // 2. Executor 인스턴스 생성 (CsvService 주입)
     var csvReader = new SimpleInquiryReadExecutor(csvFilePath, csvService);
-    
+
     // Keyed Service로 등록된 Agent를 가져와서 Executor에 주입
     var classificationAgent = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
     var classifier = new InquiryClassificationExecutor(classificationAgent);
-    
+
     var printer = new ClassificationResultPrinterExecutor();
 
     // 3. 워크플로우 빌드
     var workflowBuilder = new WorkflowBuilder(csvReader);
     workflowBuilder.WithName(key);
-    
+
     workflowBuilder
         .AddEdge(csvReader, classifier)
         .AddEdge(classifier, printer)
@@ -85,6 +84,35 @@ builder.AddWorkflow("inquiry-classification-workflow", (sp, key) =>
     return workflowBuilder.Build();
 });
 // .AddAsAIAgent(); // 이 워크플로우를 다른 워크플로우의 하위 에이전트로 쓸 때만 주석 해제
+
+builder.AddWorkflow("run-classification-workflow", (sp, key) =>
+{
+    // 1. 필요한 리소스 준비
+    var csvFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample", "inquiries.csv");
+
+    var csvService = sp.GetRequiredService<CsvService>();
+    var classificationAgent = sp.GetRequiredKeyedService<AIAgent>(InquiryClassificationAgent.NAME);
+    var beginnerRewardService = sp.GetRequiredService<BeginnerRewardService>();
+    var categoryActionService = sp.GetRequiredService<CategoryActionService>();
+
+    // 2. Executor 인스턴스 생성
+    var csvReadExecutor = new SimpleInquiryReadExecutor(csvFilePath, csvService);
+    var classificationExecutor = new InquiryClassificationExecutor(classificationAgent);
+    var categoryHandlerExecutor = new CategoryHandlerExecutor(beginnerRewardService, categoryActionService);
+    var inquiryStatusUpdateExecutor = new InquiryStatusUpdateExecutor(csvFilePath, csvService);
+
+    // 3. 워크플로우 빌드
+    var workflowBuilder = new WorkflowBuilder(csvReadExecutor);
+    workflowBuilder.WithName(key);
+
+    workflowBuilder
+        .AddEdge(csvReadExecutor, classificationExecutor)
+        .AddEdge(classificationExecutor, categoryHandlerExecutor)
+        .AddEdge(categoryHandlerExecutor, inquiryStatusUpdateExecutor)
+        .WithOutputFrom(inquiryStatusUpdateExecutor);
+
+    return workflowBuilder.Build();
+});
 
 // ============================================================
 // 5. DevUI 및 호스팅 서비스 설정 (표준 패턴)
@@ -111,7 +139,8 @@ if (app.Environment.IsDevelopment())
 
 // 워크플로우 실행 엔드포인트
 app.MapGet("/run-classification", async (
-    [FromKeyedServices("inquiry-classification-workflow")] Workflow workflow) =>
+    [FromKeyedServices("inquiry-classification-workflow")]
+    Workflow workflow) =>
 {
     try
     {
@@ -131,6 +160,38 @@ app.MapGet("/run-classification", async (
 
         Console.WriteLine("\n✅ 워크플로우 실행이 완료되었습니다.\n");
         return Results.Ok(new { message = "워크플로우 실행 완료", success = true });
+    }
+    catch (Exception ex)
+    {
+        // 실제 프로덕션에서는 로거(ILogger)를 사용하세요.
+        Console.WriteLine($"\n❌ 오류 발생: {ex.Message}");
+        return Results.Problem(detail: ex.Message);
+    }
+});
+
+// run-classification-workflow 실행 엔드포인트
+app.MapGet("/run-classification-with-action", async (
+    [FromKeyedServices("run-classification-workflow")]
+    Workflow workflow) =>
+{
+    try
+    {
+        Console.WriteLine("\n🚀 문의 분류 및 액션 처리 워크플로우를 시작합니다...\n");
+
+        // 스트리밍 실행 또는 일반 실행
+        await using var run = await InProcessExecution.RunAsync(workflow, "");
+
+        // 실행 결과 로그 출력 (이벤트 기반)
+        foreach (var evt in run.NewEvents)
+        {
+            if (evt is ExecutorCompletedEvent executorComplete)
+            {
+                Console.WriteLine($"✓ {executorComplete.ExecutorId} 완료");
+            }
+        }
+
+        Console.WriteLine("\n✅ 워크플로우 실행이 완료되었습니다.\n");
+        return Results.Ok(new { message = "분류 및 액션 처리 워크플로우 실행 완료", success = true });
     }
     catch (Exception ex)
     {
