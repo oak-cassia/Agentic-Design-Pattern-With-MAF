@@ -9,3 +9,15 @@ GET https://localhost:7063/run-classification
 Accept: application/json
 
 ###
+
+### Inquiry Classification With Action Workflow 실행 (HTTP)
+GET http://localhost:5273/run-classification-with-action
+Accept: application/json
+
+###
+
+### Inquiry Classification With Action Workflow 실행 (HTTPS)
+GET https://localhost:7063/run-classification-with-action
+Accept: application/json
+
+### 
