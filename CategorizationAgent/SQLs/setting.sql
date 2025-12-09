@@ -79,5 +79,10 @@ INSERT INTO user_numbers (user_id) VALUES
                                        ('user_9904'),
                                        ('user_9905');
 
+INSERT INTO mailbox_logs (user_id, message_id, item_type, item_id, mail_state)
+VALUES
+    (1, 1, 2, 101, 0), -- user_1001
+    (2, 1, 2, 101, 1), -- user_1002
+    (3, 1, 2, 101, 2); -- user_1003
 
 
