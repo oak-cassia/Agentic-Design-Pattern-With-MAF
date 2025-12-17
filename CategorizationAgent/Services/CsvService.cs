@@ -97,26 +97,26 @@ public class CsvService
 
     private Inquiry? ParseInquiryFromCsvLine(string line)
     {
-        try
-        {
-            var parts = SplitCsvLine(line);
-            if (parts.Count < 4) return null; // List<string> 반환으로 변경했으므로 Count 사용
+        var parts = SplitCsvLine(line);
+        if (parts.Count < 4) return null;
 
-            return new Inquiry
-            {
-                Id = int.Parse(parts[0]),
-                UserId = parts[1],
-                Description = parts[2],
-                Status = Enum.Parse<InquiryStatus>(parts[3], ignoreCase: true),
-                Category = InquiryCategory.Uncategorized,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
-        }
-        catch
+        if (!int.TryParse(parts[0], out int id)) return null;
+
+        var userId = parts[1];
+        var description = parts[2];
+
+        if (!Enum.TryParse<InquiryStatus>(parts[3], true, out var status)) return null;
+
+        return new Inquiry
         {
-            return null;
-        }
+            Id = id,
+            UserId = userId,
+            Description = description,
+            Status = status,
+            Category = InquiryCategory.Uncategorized,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
     }
 
     private string UpdateCsvLine(

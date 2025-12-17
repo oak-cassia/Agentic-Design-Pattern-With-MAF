@@ -11,7 +11,7 @@ public class ClassificationResultPrinterExecutor() : Executor<List<Classificatio
 
     private static Dictionary<int, string> LoadHandlingSummaries()
     {
-        var ruleFilePath = Path.Combine(Directory.GetCurrentDirectory(), "KnowledgeBase", InquiryClassificationAgent.RULE_FILE_NAME);
+        var ruleFilePath = Path.Combine(AppContext.BaseDirectory, "KnowledgeBase", InquiryClassificationAgent.RULE_FILE_NAME);
 
         if (!File.Exists(ruleFilePath))
         {

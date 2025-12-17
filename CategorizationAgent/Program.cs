@@ -159,3 +159,5 @@ app.MapGet("/run-classification-with-action", async (
         return Results.Problem(detail: ex.Message);
     }
 });
+
+app.Run();

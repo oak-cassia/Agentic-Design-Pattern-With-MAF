@@ -4,19 +4,26 @@ using Microsoft.Agents.AI.Workflows;
 
 namespace CategorizationAgent.Executors;
 
-public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquiry>, List<ClassificationResult>>("InquiryClassificationExecutor")
+public class InquiryClassificationExecutor : Executor<List<Inquiry>, List<ClassificationResult>>
 {
+    private readonly ChatClientAgent _chatAgent;
+
+    public InquiryClassificationExecutor(AIAgent agent) : base("InquiryClassificationExecutor")
+    {
+        if (agent is not ChatClientAgent chatAgent)
+        {
+            throw new ArgumentException("InquiryClassificationExecutor requires a ChatClientAgent.", nameof(agent));
+        }
+
+        _chatAgent = chatAgent;
+    }
+
     public async override ValueTask<List<ClassificationResult>> HandleAsync(
         List<Inquiry> inquiries,
         IWorkflowContext context,
         CancellationToken cancellationToken = default)
     {
         var results = new List<ClassificationResult>();
-
-        if (agent is not ChatClientAgent chatAgent)
-        {
-            throw new InvalidOperationException("InquiryClassificationExecutor requires a ChatClientAgent.");
-        }
 
         foreach (var inquiry in inquiries)
         {
@@ -27,9 +34,9 @@ public class InquiryClassificationExecutor(AIAgent agent) : Executor<List<Inquir
             {
                 var agentInput = $"문의 ID: {inquiry.Id}\n사용자: {inquiry.UserId}\n내용: {inquiry.Description}";
 
-                var isolatedThread = chatAgent.GetNewThread();
+                var isolatedThread = _chatAgent.GetNewThread();
 
-                var response = await chatAgent.RunAsync<ClassificationResult>(
+                var response = await _chatAgent.RunAsync<ClassificationResult>(
                     agentInput,
                     isolatedThread,
                     cancellationToken: cancellationToken);

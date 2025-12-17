@@ -1,6 +1,5 @@
 @CategorizationAgent_HostAddress = http://localhost:5273
 
-GET {{CategorizationAgent_HostAddress}}/weatherforecast/
+### Inquiry Classification With Action Workflow 실행 (HTTP)
+GET {{CategorizationAgent_HostAddress}}/run-classification-with-action
 Accept: application/json
-
-###
