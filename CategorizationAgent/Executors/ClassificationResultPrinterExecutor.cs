@@ -5,9 +5,6 @@ using System.Text.Json;
 
 namespace CategorizationAgent.Executors;
 
-/// <summary>
-/// 분류 결과 리스트를 받아서 카테고리 ID에 맞는 처리방법을 콘솔에 출력하는 Executor
-/// </summary>
 public class ClassificationResultPrinterExecutor() : Executor<List<ClassificationResult>, string>("ClassificationResultPrinterExecutor")
 {
     private static readonly Dictionary<int, string> HandlingSummaries = LoadHandlingSummaries();
@@ -15,7 +12,7 @@ public class ClassificationResultPrinterExecutor() : Executor<List<Classificatio
     private static Dictionary<int, string> LoadHandlingSummaries()
     {
         var ruleFilePath = Path.Combine(Directory.GetCurrentDirectory(), "KnowledgeBase", InquiryClassificationAgent.RULE_FILE_NAME);
-        
+
         if (!File.Exists(ruleFilePath))
         {
             Console.WriteLine($"Warning: Category rule file not found at {ruleFilePath}");
@@ -47,7 +44,7 @@ public class ClassificationResultPrinterExecutor() : Executor<List<Classificatio
             Console.WriteLine($"[문의 ID: {result.InquiryId}]");
             Console.WriteLine($"  📝 문의 내용: {result.InquiryDescription}");
             Console.WriteLine($"\n  ✅ 분류 결과: {result.CategoryName} (ID: {result.CategoryId})");
-            
+
             if (HandlingSummaries.TryGetValue(result.CategoryId, out var handlingSummary))
             {
                 Console.WriteLine($"\n  📌 처리방법:");
@@ -57,7 +54,7 @@ public class ClassificationResultPrinterExecutor() : Executor<List<Classificatio
             {
                 Console.WriteLine($"  ⚠️  처리방법 정보를 찾을 수 없습니다. (Category ID: {result.CategoryId})");
             }
-            
+
             Console.WriteLine();
         }
 

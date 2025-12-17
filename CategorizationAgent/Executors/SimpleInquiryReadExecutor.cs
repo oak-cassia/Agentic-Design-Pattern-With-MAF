@@ -6,17 +6,14 @@ using Microsoft.Extensions.AI;
 
 namespace CategorizationAgent.Executors;
 
-/// <summary>
-/// CSV 파일에서 Inquiry 목록을 읽어오는 Executor
-/// </summary>
-public class SimpleInquiryReadExecutor(string filePath, CsvService csvService) 
+public class SimpleInquiryReadExecutor(string filePath, CsvService csvService)
     : ReflectingExecutor<SimpleInquiryReadExecutor>("SimpleInquiryReadExecutor"),
-    IMessageHandler<string, List<Inquiry>>,
-    IMessageHandler<List<ChatMessage>, List<Inquiry>>
+        IMessageHandler<string, List<Inquiry>>,
+        IMessageHandler<List<ChatMessage>, List<Inquiry>>
 {
     public async ValueTask<List<Inquiry>> HandleAsync(
-        string message, 
-        IWorkflowContext context, 
+        string message,
+        IWorkflowContext context,
         CancellationToken cancellationToken = default)
     {
         Console.WriteLine("[SimpleInquiryReadExecutor] 시작");
@@ -24,8 +21,8 @@ public class SimpleInquiryReadExecutor(string filePath, CsvService csvService)
     }
 
     public async ValueTask<List<Inquiry>> HandleAsync(
-        List<ChatMessage> message, 
-        IWorkflowContext context, 
+        List<ChatMessage> message,
+        IWorkflowContext context,
         CancellationToken cancellationToken = default)
     {
         Console.WriteLine("[SimpleInquiryReadExecutor] 시작");

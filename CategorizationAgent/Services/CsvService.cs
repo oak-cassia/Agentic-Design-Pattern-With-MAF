@@ -4,22 +4,15 @@ using CategorizationAgent.Enums;
 
 namespace CategorizationAgent.Services;
 
-/// <summary>
-/// CSV 파일 읽기/쓰기 및 파싱을 담당하는 서비스
-/// </summary>
 public class CsvService
 {
-    // 동시성 제어를 위한 세마포어 (싱글톤이므로 static이 아니어도 되지만, 파일 잠금을 위해 인스턴스 필드로 사용)
     private readonly SemaphoreSlim _fileLock = new(1, 1);
 
-    /// <summary>
-    /// CSV 파일에서 Inquiry 목록을 읽어옵니다.
-    /// </summary>
     public async Task<List<Inquiry>> ReadInquiriesAsync(string filePath, CancellationToken cancellationToken = default)
     {
         ValidateFilePath(filePath);
 
-        await _fileLock.WaitAsync(cancellationToken); // 잠금 획득
+        await _fileLock.WaitAsync(cancellationToken);
         try
         {
             var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
@@ -28,7 +21,7 @@ public class CsvService
             for (int i = 1; i < lines.Length; i++)
             {
                 if (cancellationToken.IsCancellationRequested) break;
-                
+
                 var line = lines[i];
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
@@ -38,18 +31,16 @@ public class CsvService
                     inquiries.Add(inquiry);
                 }
             }
+
             Console.WriteLine($"[CsvService] {inquiries.Count}개의 문의를 읽었습니다.");
             return inquiries;
         }
         finally
         {
-            _fileLock.Release(); // 잠금 해제
+            _fileLock.Release();
         }
     }
 
-    /// <summary>
-    /// CSV 파일의 특정 Inquiry를 업데이트합니다.
-    /// </summary>
     public async Task<bool> UpdateInquiriesAsync(
         string filePath,
         Dictionary<int, (InquiryStatus Status, string ResponseMessage)> updates,
@@ -57,15 +48,15 @@ public class CsvService
     {
         ValidateFilePath(filePath);
 
-        await _fileLock.WaitAsync(cancellationToken); // 잠금 획득
+        await _fileLock.WaitAsync(cancellationToken);
         try
         {
             var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
             if (lines.Length == 0) throw new InvalidOperationException("CSV 파일이 비어있습니다.");
 
             var updatedLines = new List<string>(lines.Length);
-            updatedLines.Add(lines[0]); // 헤더 유지
-            
+            updatedLines.Add(lines[0]);
+
             int updatedCount = 0;
 
             for (int i = 1; i < lines.Length; i++)
@@ -88,11 +79,11 @@ public class CsvService
         catch (Exception ex)
         {
             Console.WriteLine($"[CsvService] 오류 발생: {ex.Message}");
-            throw; // 예외를 삼키지 않고 상위로 전파
+            throw;
         }
         finally
         {
-            _fileLock.Release(); // 잠금 해제
+            _fileLock.Release();
         }
     }
 
@@ -136,7 +127,7 @@ public class CsvService
         try
         {
             var parts = SplitCsvLine(line); // List<string> 반환
-            
+
             // [수정] 컬럼이 4개뿐일 경우(응답 없음) 5번째 컬럼 추가를 위해 패딩
             while (parts.Count < 5)
             {
@@ -224,4 +215,3 @@ public class CsvService
 
     #endregion
 }
-

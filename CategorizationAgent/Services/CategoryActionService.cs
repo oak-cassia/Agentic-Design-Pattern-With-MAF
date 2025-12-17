@@ -4,9 +4,6 @@ using System.Text.Json;
 
 namespace CategorizationAgent.Services;
 
-/// <summary>
-/// 카테고리별 처리 방법을 제공하는 서비스
-/// </summary>
 public class CategoryActionService
 {
     private readonly Dictionary<int, string> _handlingSummaries;
@@ -16,13 +13,10 @@ public class CategoryActionService
         _handlingSummaries = LoadHandlingSummaries();
     }
 
-    /// <summary>
-    /// 카테고리 규칙 파일에서 처리 방법을 로드합니다.
-    /// </summary>
     private static Dictionary<int, string> LoadHandlingSummaries()
     {
         var ruleFilePath = Path.Combine(Directory.GetCurrentDirectory(), "KnowledgeBase", InquiryClassificationAgent.RULE_FILE_NAME);
-        
+
         if (!File.Exists(ruleFilePath))
         {
             Console.WriteLine($"Warning: Category rule file not found at {ruleFilePath}");
@@ -42,9 +36,6 @@ public class CategoryActionService
         }
     }
 
-    /// <summary>
-    /// 카테고리 ID에 해당하는 처리 방법을 조회합니다.
-    /// </summary>
     public CategoryActionResponse GetCategoryAction(ClassificationResult result)
     {
         var response = new CategoryActionResponse
@@ -71,10 +62,6 @@ public class CategoryActionService
     }
 }
 
-/// <summary>
-/// 카테고리별 액션 실행 결과 응답 클래스
-/// </summary>
 public class CategoryActionResponse : CategoryActionResponseBase
 {
 }
-
