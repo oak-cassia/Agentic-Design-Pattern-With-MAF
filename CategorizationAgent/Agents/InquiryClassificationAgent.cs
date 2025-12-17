@@ -3,6 +3,7 @@ using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Data;
 using System.Text.Json;
+using CategorizationAgent.DTOs;
 
 namespace CategorizationAgent.Agents;
 
