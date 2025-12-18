@@ -83,7 +83,7 @@ CSV 문의 데이터 → [조회] → [분류] → [처리] → [갱신] → 갱
 ```
 
 ### Workflow 노드 구성
-
+![img.png](img.png)
 #### 1. SimpleInquiryReadExecutor
 
 - **역할**: 문의 조회
@@ -131,11 +131,11 @@ Inquiry → ClassificationResult → CategoryActionResponse → CSV Update
 LLM이 답변 생성 전에 외부 지식 베이스에서 신뢰할 수 있는 정보를 검색(Retrieval)하고, 이를 참고하여 답변을 생성(Generation)하는 기술
 
 #### 적용 방식
-
+![img_1.png](img_1.png)
 - **Knowledge Base**: `KnowledgeBase/CsCategoryRule.json`
 - **분류 규칙**: JSON 형식으로 CS 유형별 키워드, 패턴 정의
 - **컨텍스트 주입**: LLM에게 분류 규칙을 프롬프트와 함께 제공
-
+> 우측하단의 결과처럼 분류 수행
 #### 확장성 고려사항
 
 - **우려점**: CS 종류가 증가하면 컨텍스트가 커져 분류 품질 저하 가능
