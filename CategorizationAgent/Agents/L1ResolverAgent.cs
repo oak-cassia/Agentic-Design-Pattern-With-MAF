@@ -23,4 +23,3 @@ public static class L1ResolverAgent
         });
     }
 }
-
