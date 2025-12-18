@@ -6,12 +6,7 @@ namespace CategorizationAgent.Services;
 
 public class CategoryActionService
 {
-    private readonly Dictionary<int, string> _handlingSummaries;
-
-    public CategoryActionService()
-    {
-        _handlingSummaries = LoadHandlingSummaries();
-    }
+    private readonly Dictionary<int, string> _handlingSummaries = LoadHandlingSummaries();
 
     private static Dictionary<int, string> LoadHandlingSummaries()
     {
@@ -49,7 +44,7 @@ public class CategoryActionService
         if (_handlingSummaries.TryGetValue(result.CategoryId, out var handlingSummary))
         {
             response.IsSuccess = true;
-            response.ResponseMessage = handlingSummary;
+            response.ResponseMessage = $"[개발자 작업 도움말] {handlingSummary}";
             Console.WriteLine($"[카테고리 액션 조회 완료] InquiryId: {result.InquiryId}, CategoryId: {result.CategoryId}");
         }
         else

@@ -60,6 +60,6 @@
         "name_ko": "기타/분류 불가",
         "name_en": "OtherOrUnknown",
         "description": "위 카테고리에 명확히 들어가지 않는 문의",
-        "handling_summary": "서버 개발자 확인이 필요"
+        "handling_summary": "[존재하지 않는 유형] 서버 개발자 확인이 필요"
     }
 ]

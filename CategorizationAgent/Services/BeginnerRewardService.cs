@@ -1,6 +1,5 @@
 using CategorizationAgent.DTOs;
 using CategorizationAgent.Enums;
-using Microsoft.Extensions.DependencyInjection; // 필수 추가
 
 namespace CategorizationAgent.Services;
 
@@ -66,10 +65,10 @@ public class BeginnerRewardService(IServiceScopeFactory scopeFactory)
 
             var message = mailStatus switch
             {
-                MailStatus.Received => "이미 수령한 보상입니다.",
-                MailStatus.Expired => "우편함 만료로 삭제되었습니다.",
-                MailStatus.Pending => "우편함 확인 안내 부탁드립니다.",
-                null => "보상을 실제로 보낸 적이 있는지 확인 필요",
+                MailStatus.Received => "[수령 로그 존재] 이미 수령한 보상입니다.",
+                MailStatus.Expired => "[만료 로그 존재] 우편함 만료로 삭제되었습니다.",
+                MailStatus.Pending => "[우편 존재] 우편함 확인 안내 부탁드립니다.",
+                null => "[우편 로그 없음] 보상을 실제로 보낸 적이 있는지 확인 필요",
                 _ => "알 수 없는 상태입니다."
             };
 
